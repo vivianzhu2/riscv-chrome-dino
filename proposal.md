@@ -2,7 +2,7 @@
 mango-run
 
 ## Team members 
-Vivian Zhu
+Nancy Zou
 Nancy Zou
 
 ## Project goals
