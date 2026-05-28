@@ -3,7 +3,7 @@ mango-run
 
 ## Team members 
 Nancy Zou
-Nancy Zou
+Vivian Zhu
 
 ## Project goals
 Short description of project idea and end goal you are aiming for.
