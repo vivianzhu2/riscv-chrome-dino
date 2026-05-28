@@ -1,6 +1,9 @@
 ## Title of your project
+mango-run
 
-## Team members Vivian Zhu
+## Team members 
+Vivian Zhu
+Nancy Zou
 
 ## Project goals
 Short description of project idea and end goal you are aiming for.
