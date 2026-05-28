@@ -1,6 +1,6 @@
 ## Title of your project
 
-## Team members
+## Team members Vivian Zhu
 
 ## Project goals
 Short description of project idea and end goal you are aiming for.
