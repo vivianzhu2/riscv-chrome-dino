@@ -14,6 +14,8 @@
 #include "strings.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include "uart.h"
+#include "printf.h"
 
 #define SCREEN_W 640
 #define SCREEN_H 480
@@ -38,6 +40,8 @@
 
 #define GRAVITY 2
 #define JUMP_VY -9
+#define CACTI_RATE 100
+#define MANGO_RATE 150
 
 static int world_speed = 3;
 static int frame_counter = 0;
@@ -119,6 +123,7 @@ typedef struct {
 static player_h player;
 static cactus_h cacti[MAX_CACTI];   // stores cacti on screen
 static mango_h mangos[MAX_MANGOS];    // stores mangos on screen
+static rb_t *key_rb;
 
 static void draw_sprite(int px, int py, const unsigned char *sprite, int rows, int cols, const color_t *palette) {
     for (int r = 0; r < rows; r++) {
@@ -144,12 +149,12 @@ static void draw_player() {
 
 static void draw_cactus() {
     int py = GROUND_Y - CACTUS_Y;
-    int px;
     for (int i = 0; i < MAX_CACTI; i++) {
 	if (!cacti[i].on_screen) {
 	    continue;
 	}
-	px = cacti[i].x;
+	int px = cacti[i].x;
+	uart_putstring("in loop\n");
 	draw_sprite(px, py, &cactus_map[0][0], CACTUS_ROWS, CACTUS_COLS, cactus_palette);
     }
 }
@@ -190,7 +195,7 @@ static void update_world() {
 	}
 	cacti[i].x -= world_speed;
 	if (cacti[i].x < CACTUS_W * -1) {
-	    cacti[i].on_screen = false;
+	    cacti[i].x = SCREEN_W;
 	}
     }
 
@@ -200,22 +205,33 @@ static void update_world() {
 	}
 	mangos[i].x -= world_speed;
 	if (mangos[i].x < MANGO_W * -1) {
-	    mangos[i].on_screen = false;
+	    mangos[i].x = SCREEN_W;
 	}
+    }
+
+    if (frame_counter % CACTI_RATE == 0) {
+        for (int i = 0; i < MAX_CACTI; i++) {
+            if (!cacti[i].on_screen) {
+                cacti[i].x = SCREEN_W;
+                cacti[i].on_screen = true;
+                break;
+            }
+        }
+    }
+
+    if (frame_counter % MANGO_RATE == 0) {
+        for (int i = 0; i < MAX_MANGOS; i++) {
+            if (!mangos[i].active) {
+                mangos[i].x = SCREEN_W;
+                mangos[i].y = GROUND_Y - MANGO_Y;
+                mangos[i].active = true;
+                mangos[i].on_screen = true;
+                break;
+            }
+        }
     }
 }
 
-static void spawn_test_cactus() {
-    cacti[0].x = 400;
-    cacti[0].on_screen = true;
-}
- 
-static void spawn_test_mango(void) {
-    mangos[0].x = 300;
-    mangos[0].y = GROUND_Y - MANGO_Y - 2;
-    mangos[0].active = true;
-    mangos[0].on_screen = true;
-}
 
 static void game_reset(void) {
     frame_counter = 0;
@@ -230,9 +246,6 @@ static void game_reset(void) {
 	mangos[i].on_screen = false;
 	mangos[i].active = false;
     }
-
-    spawn_test_cactus();
-    spawn_test_mango();
 }
 
 static void render() {
@@ -247,19 +260,21 @@ static void render() {
 static ps2_device_t *ps2_dev;
 
 void mango_run() {
-    init_colors();
-    ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
-    interrupts_global_enable();
     gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
+    init_colors();
+    interrupts_init();
+    keyboard_init(GPIO_PB3, GPIO_PB4);
+    interrupts_global_enable();
     game_reset();
+
 
     while (1) {
 	unsigned int t0 = timer_get_ticks();
         frame_counter++;
-        update_player();
+	update_player();
         update_world();
-        render();
+	render();
 	while (timer_get_ticks() - t0 < 10000);
     }
 }
-
+	

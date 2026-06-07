@@ -2,5 +2,5 @@
 #define _MY_MODULE_H
 
 void say_hello(const char *name);
-
+void mango_run(void);
 #endif
