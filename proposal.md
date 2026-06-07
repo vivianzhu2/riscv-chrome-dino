@@ -45,7 +45,7 @@ Are there books/code/tools that you need access to?
 What are the possible risks to overcome? What are you concerned about? 
 How can we help you succeed?
 
- Risk 1: Accelerometer can’t detect the difference between jump and crouch
+Risk 1: Accelerometer can’t detect the difference between jump and crouch
 Solution 1: Use accelerometer for jump and a touch sensor for crouch
 
 Risk 2: Can’t attach accelerometer/case to the body in a stable way

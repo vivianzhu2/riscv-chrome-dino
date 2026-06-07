@@ -5,6 +5,8 @@
 
 void mango_run(void);
 
+void mango_run(void);
+
 void main(void) {
     uart_init();
 //    say_hello("CS107e");

@@ -82,6 +82,7 @@ int readSample(void)
     //and to try and stop the drift which will inevitably happen on the gyroscope...
     
 }
+<<<<<<< HEAD
 
 void printData(int16_t[][] data){
     for(int i =0; i < 10000000; i++){
@@ -178,3 +179,5 @@ int main(int argc, char **argv)
 
   return 0;
 }
+=======
+>>>>>>> d1d06ce177c6a29d15bef56ab3a9c129eb2a065c
