@@ -14,7 +14,9 @@
 #include "strings.h"
 #include <stddef.h>
 #include <stdbool.h>
+#include "jump.h"
 #include "uart.h"
+#include "i2c.h"
 #include "printf.h"
 
 #define SCREEN_W 640
@@ -178,7 +180,7 @@ static void jump() {    // no double jumps, only jumps when player is grounded
     }
 }
 
-static void update_player() {
+static void update_player(int* jump_detected) { // pass the jump+detected? 
     player.vy += GRAVITY;
     player.py += player.vy;
     if (player.py >= GROUND_Y - (PLAYER_ROWS * SCALE)) {
@@ -257,24 +259,55 @@ static void render() {
     gl_swap_buffer();
 }
 
-static ps2_device_t *ps2_dev;
+
+// void mango_run() {
+//     init_colors();
+//     ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
+//     interrupts_global_enable();
+//     gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
+//     game_reset();
+
+//     while (1) {
+// 	unsigned int t0 = timer_get_ticks();
+//         frame_counter++;
+//         update_player();
+//         update_world();
+//         render();
+// 	while (timer_get_ticks() - t0 < 10000);
+//     }
+// }
+
 
 void mango_run() {
-    gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
     init_colors();
+    // uart_init();
     interrupts_init();
-    keyboard_init(GPIO_PB3, GPIO_PB4);
+    i2c_device_t* acc = accel_init();
+    // ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
     interrupts_global_enable();
+    gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
+  //  init_colors();
+   // interrupts_init();
+    keyboard_init(GPIO_PB3, GPIO_PB4);
+   // interrupts_global_enable();
     game_reset();
 
 
+    int jump_detected = 0;
+    int jump_done = 1;
     while (1) {
-	unsigned int t0 = timer_get_ticks();
+        unsigned long t0 = timer_get_ticks();
+        
+        if(jump_detected == 0){
+          jump_detected = jumpDetected(acc);
+        }
+        // jump_detected = 0; // reset for next jump
         frame_counter++;
-	update_player();
+        update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
         update_world();
-	render();
-	while (timer_get_ticks() - t0 < 10000);
-    }
-}
-	
+        render();
+        printf("jump detected: %d, jump done: %d\n", jump_detected, jump_done);
+        printf("time: %ld\n",(timer_get_ticks()-t0));
+        while (timer_get_ticks() - t0 < 1200000);
+        }
+  }
