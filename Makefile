@@ -4,7 +4,7 @@
 # Link against your libmango + reference libmango (edit LDLIBS, LDFLAGS to change)
 
 PROGRAM = main.bin
-SOURCES = $(PROGRAM:.bin=.c) mymodule.c
+SOURCES = $(PROGRAM:.bin=.c) jump.c game.c
 
 all: $(PROGRAM)
 
@@ -24,7 +24,7 @@ OBJECTS = $(addsuffix .o, $(basename $(SOURCES)))
 	riscv64-unknown-elf-objcopy $< -O binary $@
 
 # Link program executable from all common objects and student library
-%.elf: $(OBJECTS) libmymango.a
+%.elf: $(OBJECTS) libmymango.a libextra.a
 	riscv64-unknown-elf-ld $(LDFLAGS) $^ $(LDLIBS) -o $@
 
 # Compile C source to object file
