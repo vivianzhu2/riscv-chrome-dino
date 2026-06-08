@@ -14,7 +14,7 @@
 #include "strings.h"
 #include <stddef.h>
 #include <stdbool.h>
-//#include "jump.h"
+#include "jump.h"
 #include "uart.h"
 #include "i2c.h"
 #include "printf.h"
@@ -179,15 +179,24 @@ static void jump() {    // no double jumps, only jumps when player is grounded
     }
 }
 
-//static void update_player(int* jump_detected) { // pass the jump+detected? 
-static void update_player() {
+static int update_player(int* jump_detected) { // pass the jump+detected? 
+// static void update_player() {
+    if (*jump_detected == 1 && player.grounded) {
+        jump();
+        player.grounded = false;
+        *jump_detected = 0;
+    }
+    
     player.vy += GRAVITY;
     player.py += player.vy;
+    
     if (player.py >= GROUND_Y - (PLAYER_ROWS * SCALE)) {
-	player.py = GROUND_Y - (PLAYER_ROWS * SCALE);
-	player.vy = 0;
-	player.grounded = true;
+        player.py = GROUND_Y - (PLAYER_ROWS * SCALE);
+        player.vy = 0;
+        player.grounded = true;
     }
+    return *jump_detected;
+    
 }
 
 static void update_world() {
@@ -281,23 +290,24 @@ void mango_run() {
 
 //    i2c_device_t* acc = accel_init();
     
-  //  i2c_device_t* acc = accel_init();
-    int jump_detected = 0;
-    int jump_done = 1;
+    i2c_device_t* acc = accel_init();
+    static int jump_detected = 0;
+    static int jump_done = 1;
     while (1) {
         unsigned long t0 = timer_get_ticks();
         
         if(jump_detected == 0){
-//          jump_detected = jumpDetected(acc);
+         jump_detected = jumpDetected(acc);
         }
         // jump_detected = 0; // reset for next jump
         frame_counter++;
-	update_player();
+        printf("jump detected: %d   \n", jump_detected);
+	    update_player(&jump_detected);
 //	update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
         update_world();
-	render();
- //       printf("jump detected: %d, jump done: %d\n", jump_detected, jump_done);
-    	   printf("time: %ld\n",(timer_get_ticks()-t0));
+	    render();
+        
+    	// printf("time: %ld\n",(timer_get_ticks()-t0));
         while (timer_get_ticks() - t0 < 10000);
    }
 }
