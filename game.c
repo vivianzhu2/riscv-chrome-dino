@@ -46,7 +46,7 @@
 #define MANGO_RATE 150
 
 static int world_speed = 3;
-static int frame_counter = 0;
+static int frame_counter = 0;	
 
 static color_t COLOR_GROUND;
 static color_t COLOR_BACKGROUND;
@@ -125,7 +125,6 @@ typedef struct {
 static player_h player;
 static cactus_h cacti[MAX_CACTI];   // stores cacti on screen
 static mango_h mangos[MAX_MANGOS];    // stores mangos on screen
-static rb_t *key_rb;
 
 static void draw_sprite(int px, int py, const unsigned char *sprite, int rows, int cols, const color_t *palette) {
     for (int r = 0; r < rows; r++) {
@@ -199,6 +198,7 @@ static int update_player(int* jump_detected) { // pass the jump+detected?
     
 }
 
+
 static void update_world() {
     for (int i = 0; i < MAX_CACTI; i++) {
 	if (!cacti[i].on_screen) {
@@ -241,8 +241,30 @@ static void update_world() {
             }
         }
     }
+
 }
 
+
+static bool check_collision() {
+    uart_putstring("in check_collision\n");
+    for (int x = 0; x < PLAYER_ROWS; x++) {
+	for (int y = 0; y < PLAYER_COLS; y++) {
+	    if (player_map[x][y] == 0) {
+		continue;
+	    }
+	    
+	    int px = PLAYER_X + x * SCALE;
+	    int py = player.py + y * SCALE;
+
+	    color_t next_pixel = gl_read_pixel(px + world_speed, py);
+            color_t green = gl_color(0x4c, 0xaf, 0x50);    // green
+	    if (next_pixel == green) {
+		return true;
+	    }
+	}
+    }
+    return false;
+}
 
 static void game_reset(void) {
     frame_counter = 0;
@@ -259,16 +281,23 @@ static void game_reset(void) {
     }
 }
 
-static void render() {
+static bool render() {
     gl_clear(COLOR_BACKGROUND);
     draw_ground();
-    draw_player();
     draw_cactus();
     draw_mango();
+    draw_player();
+    bool hit = check_collision();
     gl_swap_buffer();
+    return hit;
 }
 
 
+
+static void render_end() {
+    gl_clear(COLOR_GROUND);
+    gl_swap_buffer();
+}    
 
 void mango_run() {
 /*    init_colors();
@@ -276,20 +305,18 @@ void mango_run() {
     interrupts_init();
     i2c_device_t* acc = accel_init();
     // ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
-    interrupts_global_enable();
-  */ gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
+    interrupts_global_enable();  */
+    gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
     init_colors();
 //    uart_init();
     interrupts_init();
      
 //    ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
 //    keyboard_init(GPIO_PB3, GPIO_PB4);
-    keyboard_init(GPIO_PB3, GPIO_PB4);
+//    keyboard_init(GPIO_PB3, GPIO_PB4);
     interrupts_global_enable();
     game_reset();
 
-//    i2c_device_t* acc = accel_init();
-    
     i2c_device_t* acc = accel_init();
     static int jump_detected = 0;
     static int jump_done = 1;
@@ -301,12 +328,23 @@ void mango_run() {
         }
         // jump_detected = 0; // reset for next jump
         frame_counter++;
-        printf("jump detected: %d   \n", jump_detected);
-	    update_player(&jump_detected);
+//        printf("jump detected: %d   \n", jump_detected);
+	update_player(&jump_detected);
 //	update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
-        update_world();
-	    render();
-        
+	update_world();
+// 	uart_putstring("dont with update world");	
+	bool hit = render();
+	
+//	uart_putstring("done with render");
+	if (hit) {
+	    render_end();
+	    break;
+	} 
+/*	if (check_collision()) {
+            render_end();
+	    break;
+	}        
+*///	uart_putstring("done with collision check");
     	// printf("time: %ld\n",(timer_get_ticks()-t0));
         while (timer_get_ticks() - t0 < 10000);
    }
