@@ -1,4 +1,4 @@
-/* File name: game.c
+cp libmymango.a ~/cs107e_home/project//* File name: game.c
  * File description: 
  *
  */
@@ -16,8 +16,8 @@
 #include <stdbool.h>
 //#include "jump.h"
 #include "uart.h"
-#include "i2c.h"
-#include "printf.h"
+//#include "i2c.h"
+//#include "printf.h"
 
 #define SCREEN_W 640
 #define SCREEN_H 480
@@ -45,8 +45,8 @@
 #define CACTI_RATE 100
 #define MANGO_RATE 150
 
-static int world_speed = 3;
-static int frame_counter = 0;
+static int world_speed = 20;
+static int frame_counter = 0;	
 
 static color_t COLOR_GROUND;
 static color_t COLOR_BACKGROUND;
@@ -125,14 +125,13 @@ typedef struct {
 static player_h player;
 static cactus_h cacti[MAX_CACTI];   // stores cacti on screen
 static mango_h mangos[MAX_MANGOS];    // stores mangos on screen
-static rb_t *key_rb;
 
 static void draw_sprite(int px, int py, const unsigned char *sprite, int rows, int cols, const color_t *palette) {
     for (int r = 0; r < rows; r++) {
         for (int c = 0; c < cols; c++) {
             unsigned char index = sprite[r * cols + c];
             if (index != 0) {
-                gl_draw_rect(px + c * SCALE, py + r * SCALE, SCALE, SCALE, palette[index]);  // draws one pixel at a time
+                gl_draw_rect(px + c * cp libmymango.a ~/cs107e_home/project/SCALE, py + r * SCALE, SCALE, SCALE, palette[index]);  // draws one pixel at a time
             }
         }
     }
@@ -267,29 +266,29 @@ void mango_run() {
     interrupts_init();
     i2c_device_t* acc = accel_init();
     // ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
-    interrupts_global_enable();
-  */ gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
+    interrupts_global_enable();  */
+    gl_init(SCREEN_W, SCREEN_H, GL_DOUBLEBUFFER);
     init_colors();
 //    uart_init();
     interrupts_init();
      
 //    ps2_dev = ps2_new(GPIO_PB3, GPIO_PB4); 
 //    keyboard_init(GPIO_PB3, GPIO_PB4);
-    keyboard_init(GPIO_PB3, GPIO_PB4);
+//    keyboard_init(GPIO_PB3, GPIO_PB4);
     interrupts_global_enable();
     game_reset();
 
 //    i2c_device_t* acc = accel_init();
     
   //  i2c_device_t* acc = accel_init();
-    int jump_detected = 0;
-    int jump_done = 1;
-    while (1) {
-        unsigned long t0 = timer_get_ticks();
-        
-        if(jump_detected == 0){
+//    int jump_detected = 0;
+  //  int jump_done = 1;
+    while (1) {  
+      unsigned long t0 = timer_get_ticks();
+       
+     //   if(jump_detected == 0){
 //          jump_detected = jumpDetected(acc);
-        }
+      //  }
         // jump_detected = 0; // reset for next jump
         frame_counter++;
 	update_player();
@@ -297,7 +296,8 @@ void mango_run() {
         update_world();
 	render();
  //       printf("jump detected: %d, jump done: %d\n", jump_detected, jump_done);
-    	   printf("time: %ld\n",(timer_get_ticks()-t0));
-        while (timer_get_ticks() - t0 < 10000);
-   }
+//    	   printf("time: %ld\n",(timer_get_ticks()-t0));
+        while (timer_get_ticks() - t0 < 1000000);
+	
+    }
 }
