@@ -61,7 +61,7 @@ int jumpDetected(i2c_device_t* i2cdev){
     int threshold = 830723680; // Adjust this threshold based on experimentation to detect jumps accurately
     static int jump_detected = 0;
     static int takeoff_detected=0;
-    static int takeoff_time= 0; // fix this
+    static unsigned int takeoff_time= 0; // fix this
     static int landing_time = 0;
     static int squat_detected = 0;
     static int squat_threshold = 15000; // Adjust this threshold based on experimentation to detect squats accurately
@@ -74,7 +74,8 @@ int jumpDetected(i2c_device_t* i2cdev){
     // (Math.signum(xval)*Math.sqrt(xval*xval+yval*yval+zval*zval))*-1)-9.81
     unsigned int totalaccel = (x_accel*x_accel+y_accel*y_accel+z_accel*z_accel);
     printf("Accel: %d\n", totalaccel);
-    int currtime = timer_get_ticks();
+    unsigned int currtime = timer_get_ticks();
+    printf("time difference: %d", currtime-takeoff_time);
     if(totalaccel > threshold && currtime-takeoff_time > 2*24000000){ // Check if enough time has passed since last takeoff to prevent multiple detections for the same jump
         // takeoff_detected = 1;
         takeoff_time = timer_get_ticks();
