@@ -82,14 +82,14 @@ int jumpDetected(i2c_device_t* i2cdev){
         printf("JUMP DETECTED\n");
         return 1;
     }
-    if(takeoff_detected == 1 && totalaccel > 20000){
-        landing_time = timer_get_ticks();
-        int airtime = landing_time - takeoff_time;
-        if(airtime > 500){ // Adjust this threshold based on experimentation to filter out false positives
-            jump_detected = 1;  
-        }
-        takeoff_detected = 0; // reset for next jump
-    }
+    // if(takeoff_detected == 1 && totalaccel > 20000){
+    //     landing_time = timer_get_ticks();
+    //     int airtime = landing_time - takeoff_time;
+    //     if(airtime > 500){ // Adjust this threshold based on experimentation to filter out false positives
+    //         jump_detected = 1;  
+    //     }
+    //     takeoff_detected = 0; // reset for next jump
+    // }
 
    
     //printf("X: %06d, Y: %06d, Z: %06d\n", x_accel, y_accel, z_accel);

@@ -10,10 +10,11 @@ void mango_run(void);
 void main(void) {
     uart_init();
     i2c_device_t* ducktest = accel_init();
-    while(1){
-        printf("%d", duckDetected(ducktest));
-        // jumpDetected(ducktest);
-    }
+    mango_run(); 
+    // while(1){
+    //     printf("%d", duckDetected(ducktest));
+    //     // jumpDetected(ducktest);
+    // }
     
     
     //    say_hello("CS107e");
