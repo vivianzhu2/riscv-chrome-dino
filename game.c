@@ -46,7 +46,7 @@
 #define CACTI_RATE 100
 #define MANGO_RATE 150
 
-static int world_speed = 3;
+static int world_speed = 4;
 static int frame_counter = 0;	
 
 static color_t COLOR_GROUND;
@@ -314,6 +314,7 @@ static void squat(){
         // player.height = PLAYER_COLS - 5; // Adjust height to simulate squatting
         while(timer_get_ticks() - start_time < duration){
             draw_squat_player(); // Continuously draw the squatting player
+            update_world(); // Update the world to keep obstacles moving
             if(render(1)){
                 break;
             }
