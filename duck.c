@@ -99,13 +99,13 @@ int duckDetected(i2c_device_t* i2cdev){
     unsigned int currtime = timer_get_ticks(); 
 
     nexttotal = (nextx * nextx + nexty * nexty + nextz * nextz);
-    printf("prevtotal: %d \ncurrtotal: %d\n nexttotal: %d\n", prevtotal, currtotal, nexttotal);
+//    printf("prevtotal: %d \ncurrtotal: %d\n nexttotal: %d\n", prevtotal, currtotal, nexttotal);
     if(nexttotal < currtotal && currtotal > prevtotal && nexttotal!=0 && currtotal!=0 && prevtotal !=0){
-      printf("PEAK: %d | jump_diff: %d | squat_diff: %d\n", 
+ /*    printf("PEAK: %d | jump_diff: %d | squat_diff: %d\n", 
         currtotal, 
         currtime - jtakeoff_time,
         currtime - stakeoff_time);
-        if(currtotal > jump_threshold && currtime-jtakeoff_time > 1.5*24000000){
+   */     if(currtotal > jump_threshold && currtime-jtakeoff_time > 1.5*24000000){
           jtakeoff_time = timer_get_ticks();  
           stakeoff_time = timer_get_ticks();  
           // printf("PEAK: %u | jump_thresh: %u (%s) | squat_thresh: %u (%s)\n",
