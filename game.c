@@ -493,21 +493,42 @@ void mango_run() {
                 highScore = score;
             }
 	        render_end();
-	            
-    	    while (1) {
-                int detected = duckDetected(acc);  // always read every frame
-                // printf("detected: %d\n jumpDetected: %d\n", detected,jump_detected);
-                // timer_delay_ms(10);
-                if (detected == 2 && jump_detected == 0) {
-                    game_reset();      // only latch if nothing pending
-                    uart_putstring("jump detected for end screen");
-        
+            duckReset();
+
+            for (int i = 0; i < 10; i++) {
+                duckDetected(acc);
+            }
+            
+            while (1) {
+                int restart = duckDetected(acc);
+                if (restart == 1) {
                     break;
-	        }
-	    }
+                }
+            }
+    
+            // now fully reset state before continuing
+            game_reset();
+            
+            jump_detected = 0;  // ← clear so first frame doesn't immediately jump
+            // // drain the sensor — skip stale peaks from the restart gesture
+            // for (int i = 0; i < 10; i++) {
+            //     duckDetected(acc);
+            // }
+        }
+            // while (1) {
+                
+            //     jump_detected = duckDetected(acc);  // always read every frame
+            //     if (jump_detected != 0) {
+            //         game_reset();  // reset the game when a jump is detected
+            //         jump_detected = 0;
+            //         uart_putstring("Jump detected! Resetting game...");
+            //         break;
+            //     }
+            // }
+	
 	   
         //break;
-	} 
+	
 /*	if (check_collision()) {
             render_end();
 	    break;

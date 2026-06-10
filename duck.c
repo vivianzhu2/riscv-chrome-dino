@@ -31,6 +31,13 @@
 #define LONG 25 // Equals ~400KHz
 #define SHORT 5
 
+static unsigned int nexttotal = 0;
+static unsigned int currtotal = 0;
+static unsigned int prevtotal = 0;
+
+
+static unsigned int jtakeoff_time= 0; // fix this
+static unsigned int stakeoff_time = 0;
 i2c_device_t* accelDuck_init(){
 
   uint8_t data;
@@ -56,33 +63,13 @@ i2c_device_t* accelDuck_init(){
   return i2cdev;
 }
 
-//1. Good initiative to add squart detection 
-// 2. Look more carefully on the waveform you collected, at each measurement, you need to detect if it’s a jump, or a squart or neither. So in that case, should you separate the jump or squart detection function?
-// 3. each I2c read is blocking, I.e. the program will wait it to finish until it finishes, it can’t do other things like drawing. Each read will take some time, in this case, I2c needs to read multiple bytes from the sensor, so during this time, you can’t do other things (since it’s not interrupt). Therefore if you read three times in the function, it will slow down your drawing. Drawing is important because that’s what the player will see.
-   
-// 4. Another reason you can’t read three times and then decide is what if the jump or squart peak is at the first or the third in your function, you will miss it.
-// You are in the right direction, try to look at the waveform, always keep in mind after read one datapoint using the I2c read, you need to decide with the current and previous data. 
-// typedef struct {
-//   unsigned int x_a;
-//   unsigned int y_a;
-//   unsigned int z_a;
-//   unsigned int totalaccel;
-// } accel_t
-
-// //     //1. Prev/curr/next_acc, just use unsigned int to store the total, not need to use struct to store x/y/z
-// // 2. Prev=curr;curr=next. Need to move before reading the sensor; 
-// // 3. Continue should be return 0; at the end should return 0 too 
-// // 4. line jump_detected=0; should be jump_detected=1
-// // 5. This function should replace
-// // the old jumpdetected function. With the same jumpdetected function name as used in the main function.
 
 
 int duckDetected(i2c_device_t* i2cdev){
     int jump_threshold = 830723680; // Adjust this threshold based on experimentation to detect jumps accurately
     static int jump_detected = 0;
     // static int takeoff_detected = 0;
-    static unsigned int jtakeoff_time= 0; // fix this
-    static unsigned int stakeoff_time = 0;
+
 
     // static int start = 0;
     // if (start == 0) {
@@ -94,9 +81,6 @@ int duckDetected(i2c_device_t* i2cdev){
     static int squat_threshold = 404970496; // Adjust this threshold based on experimentation to detect squats accurately
     static uint8_t accel[6];
     
-    static unsigned int nexttotal = 0;
-    static unsigned int currtotal = 0;
-    static unsigned int prevtotal = 0;
 
     // static accel_t prev_acc = NULL;
     // static accel_t curr_acc = NULL;
@@ -115,12 +99,12 @@ int duckDetected(i2c_device_t* i2cdev){
     unsigned int currtime = timer_get_ticks(); 
 
     nexttotal = (nextx * nextx + nexty * nexty + nextz * nextz);
-    // printf("prevtotal: %d \ncurrtotal: %d\n nexttotal: %d\n", prevtotal, currtotal, nexttotal);
+    printf("prevtotal: %d \ncurrtotal: %d\n nexttotal: %d\n", prevtotal, currtotal, nexttotal);
     if(nexttotal < currtotal && currtotal > prevtotal && nexttotal!=0 && currtotal!=0 && prevtotal !=0){
-      // printf("PEAK: %d | jump_diff: %d | squat_diff: %d\n", 
-        // currtotal, 
-        // currtime - jtakeoff_time,
-        // currtime - stakeoff_time);
+      printf("PEAK: %d | jump_diff: %d | squat_diff: %d\n", 
+        currtotal, 
+        currtime - jtakeoff_time,
+        currtime - stakeoff_time);
         if(currtotal > jump_threshold && currtime-jtakeoff_time > 1.5*24000000){
           jtakeoff_time = timer_get_ticks();  
           stakeoff_time = timer_get_ticks();  
@@ -146,6 +130,8 @@ int duckDetected(i2c_device_t* i2cdev){
     
 
 
+
+
     // if(totalaccel > threshold && currtime-takeoff_time > 2*24000000){ // Check if enough time has passed since last takeoff to prevent multiple detections for the same jump
     //     // takeoff_detected = 1;
     //     takeoff_time = timer_get_ticks();
@@ -169,6 +155,13 @@ int duckDetected(i2c_device_t* i2cdev){
 
   return 0;
 
+}
+void duckReset(void){
+  stakeoff_time = 0;
+  jtakeoff_time = 0;
+  prevtotal = 0;
+  currtotal = 0;
+  nexttotal = 0;
 }
 
 // toggle when to look at jump
