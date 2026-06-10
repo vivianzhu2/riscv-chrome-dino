@@ -367,9 +367,23 @@ static bool render(int squat) {
 static void render_end() {
     gl_clear(COLOR_GROUND);
     const char* endstr = "GAME OVER";
-    
-    gl_draw_string((gl_get_width() - (strlen(endstr) * gl_get_char_width())) / 2, gl_get_height() / 2, endstr, GL_WHITE);
-    
+    const char* restartGame = "STARTING AGAIN IN 5 SECONDS";
+
+    draw_score();
+    draw_highScore();
+
+    gl_draw_string((gl_get_width() - (strlen(endstr) * gl_get_char_width())) / 2, gl_get_height() / 2 - 10, endstr, GL_WHITE);
+    gl_draw_string((gl_get_width() - (strlen(restartGame) * gl_get_char_width())) / 2, gl_get_height() / 2 + gl_get_char_height(), restartGame, GL_WHITE);
+    // for(int i = 5; i >= 0; i--){
+    //     gl_clear(COLOR_GROUND);
+    //     const char* scorestr = decimal_string(i);
+    //     // char scoreScreen[64] = "STARTING AGAIN IN... "; 
+    //     // int length = strlcat(scoreScreen, scorestr, sizeof(scoreScreen));
+    //     // //printf("scoreScreen: %s \n", scoreScreen);
+    //     // gl_draw_string(gl_get_width() - (length * gl_get_char_width() + 15), 20, scoreScreen, GL_WHITE);
+    //     gl_draw_string(gl_get_width() - (strlen(endstr) * gl_get_char_width()) / 2 + gl_get_char_width(),  gl_get_height() / 2 + gl_get_char_height(), scorestr, GL_WHITE);
+    //     // gl_swap_buffer();
+    // }
     gl_swap_buffer();
 }    
 
@@ -382,9 +396,9 @@ static void squat(){
     while(timer_get_ticks() - start_time < duration){
         draw_squat_player(); // Continuously draw the squatting player
         update_world(); // Update the world to keep obstacles moving
-        if(render(1)){
-            break;
-        }
+        // if(render(1)){
+        //     break;
+        // }
         // printf("SQUAT DETECTED IN UPDATE_PLAYER\n");
     }
         // player.height = PLAYER_COLS; // Reset height after squatting
@@ -404,7 +418,7 @@ static int update_player(int* jump_detected) { // pass the jump+detected?
         }
         if(*jump_detected == 2 && player.grounded){
             squat();
-            player.grounded = false;
+            // player.grounded = false;
             *jump_detected = 0;
         }
         player.vy += GRAVITY;
@@ -464,12 +478,10 @@ void mango_run() {
         // jump_detected = 0; // reset for next jump
         frame_counter++;
         printf("jump detected: %d   \n", jump_detected);
-    // update_player(2);
+
 	update_player(&jump_detected);
     score = frame_counter * world_speed * 0.025;
-    // if(score % 100 == 0){
-    //     changeLevel();
-    // }
+
 //	update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
 	update_world();
 // 	uart_putstring("dont with update world");	
@@ -477,52 +489,18 @@ void mango_run() {
     // printf("score: %d \n", score);
 //	uart_putstring("done with render");
 	if (hit) {
-            if (score > highScore) {
-                highScore = score;
-            }
-	        render_end();
-            duckReset();
-
-            for (int i = 0; i < 10; i++) {
-                duckDetected(acc);
-            }
-
-            while (1) {
-                int restart = duckDetected(acc);
-                if (restart == 1) {
-                    break;
-                }
-            }
-    
-            // now fully reset state before continuing
-            game_reset();
-            
-            jump_detected = 0;  // ← clear so first frame doesn't immediately jump
-            // // drain the sensor — skip stale peaks from the restart gesture
-            // for (int i = 0; i < 10; i++) {
-            //     duckDetected(acc);
-            // }
+        int start = timer_get_ticks();
+        int duration = 5 * 24000000;
+        if (score > highScore) {
+            highScore = score;
         }
-            // while (1) {
-                
-            //     jump_detected = duckDetected(acc);  // always read every frame
-            //     if (jump_detected != 0) {
-            //         game_reset();  // reset the game when a jump is detected
-            //         jump_detected = 0;
-            //         uart_putstring("Jump detected! Resetting game...");
-            //         break;
-            //     }
-            // }
-	
-	   
-        //break;
-	
-/*	if (check_collision()) {
-            render_end();
-	    break;
-	}        
-*///	uart_putstring("done with collision check");
-    	// printf("time: %ld\n",(timer_get_ticks()-t0));
-        while (timer_get_ticks() - t0 < 10000);
-   }
+
+        render_end();
+        unsigned int beg = timer_get_ticks();
+        while (timer_get_ticks() - beg < 5 * 24000000);
+        game_reset();
+        jump_detected = 0;
+
+    }
+    while (timer_get_ticks() - t0 < 10000);
 }
