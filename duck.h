@@ -23,6 +23,7 @@ i2c_device_t* accelDuck_init(void); // initialize the display module
 
 int duckDetected(i2c_device_t* i2cdev); //   configure the display by setting the appropriate refresh delay and display duration for the display, and ensuring that all necessary pins are set to output mode
 
+void duckReset(void);
 // void set_refresh_delay(unsigned int rdelay); // set the refresh delay for the display
 
 // unsigned int get_refresh_delay(void); // get the refresh delay for the display
