@@ -47,7 +47,7 @@
 static int  CACTI_RATE = 100;
 static int  MANGO_RATE = 150;
 
-static int world_speed = 3;
+static int world_speed = 5;
 static int frame_counter = 0;	
 
 static color_t COLOR_GROUND;
@@ -388,18 +388,18 @@ static void squat(){
     int duration = 1.5 * 24000000; 
     int start_time = timer_get_ticks();
 
-    if(player.grounded){
+    // if(player.grounded){
         // player.height = PLAYER_COLS - 5; // Adjust height to simulate squatting
-        while(timer_get_ticks() - start_time < duration){
-            draw_squat_player(); // Continuously draw the squatting player
-            update_world(); // Update the world to keep obstacles moving
-            if(render(1)){
-                break;
-            }
-            // printf("SQUAT DETECTED IN UPDATE_PLAYER\n");
+    while(timer_get_ticks() - start_time < duration){
+        draw_squat_player(); // Continuously draw the squatting player
+        update_world(); // Update the world to keep obstacles moving
+        if(render(1)){
+            break;
         }
-        player.height = PLAYER_COLS; // Reset height after squatting
+        // printf("SQUAT DETECTED IN UPDATE_PLAYER\n");
     }
+        // player.height = PLAYER_COLS; // Reset height after squatting
+        // }
     // if (timer_get_ticks() < squat_end_time) {
     //     player.height = PLAYER_ROWS - 5;  // crouched
     // } else {
@@ -414,7 +414,6 @@ static int update_player(int* jump_detected) { // pass the jump+detected?
             *jump_detected = 0;
         }
         if(*jump_detected == 2 && player.grounded){
-            
             squat();
             player.grounded = false;
             *jump_detected = 0;
@@ -498,7 +497,7 @@ void mango_run() {
             for (int i = 0; i < 10; i++) {
                 duckDetected(acc);
             }
-            
+
             while (1) {
                 int restart = duckDetected(acc);
                 if (restart == 1) {
