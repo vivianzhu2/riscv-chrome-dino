@@ -240,7 +240,8 @@ static void update_world() {
 	}
 	cacti[i].x -= world_speed;
 	if (cacti[i].x < CACTUS_W * -1) {
-	    cacti[i].x = SCREEN_W;
+//	    cacti[i].x = SCREEN_W;
+	    cacti[i].on_screen = false;
 	}
     }
 
@@ -250,7 +251,8 @@ static void update_world() {
 	}
 	mangos[i].x -= world_speed;
 	if (mangos[i].x < MANGO_W * -1) {
-	    mangos[i].x = SCREEN_W;
+//	    mangos[i].x = SCREEN_W;
+	    cacti[i].on_screen = false;
 	}
     }
 
@@ -352,11 +354,13 @@ static void render_end() {
     gl_draw_string((gl_get_width() - (strlen(endstr) * gl_get_char_width())) / 2, gl_get_height() / 2, endstr, GL_WHITE);
     
     gl_swap_buffer();
-    while (1) {
+/*    while (1) {
         int detected = duckDetected(acc);  // always read every frame
         if (detected != 0 && jump_detected == 0) {
             game_reset();      // only latch if nothing pending
-        }
+            break;
+	}
+    }*/
 }    
 
 static void squat(){
@@ -452,7 +456,7 @@ void mango_run() {
 //        printf("jump detected: %d   \n", jump_detected);
     // update_player(2);
 	update_player(&jump_detected);
-    score = frame_counter * world_speed * 0.025;
+        score = frame_counter * world_speed * 0.025;
 
 //	update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
 	update_world();
@@ -461,12 +465,22 @@ void mango_run() {
     // printf("score: %d \n", score);
 //	uart_putstring("done with render");
 	if (hit) {
-        if (score > highScore) {
-            highScore = score;
-        }
+            if (score > highScore) {
+                highScore = score;
+            }
 	    render_end();
-        
-	    break;
+	            
+    	    while (1) {
+                int detected = duckDetected(acc);  // always read every frame
+	        if (detected != 0 && jump_detected == 0) {
+                    game_reset();      // only latch if nothing pending
+		    uart_putstring("jump detected for end screen");
+	
+                    break;
+	        }
+	    }
+	   
+        //break;
 	} 
 /*	if (check_collision()) {
             render_end();
