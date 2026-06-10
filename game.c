@@ -397,9 +397,9 @@ static void squat(){
     while(timer_get_ticks() - start_time < duration){
         draw_squat_player(); // Continuously draw the squatting player
         update_world(); // Update the world to keep obstacles moving
-//        if(render(1)){
-  //          break;
-     //   }
+       if(render(1)){
+           break;
+       }
         // printf("SQUAT DETECTED IN UPDATE_PLAYER\n");
     }
         // player.height = PLAYER_COLS; // Reset height after squatting
@@ -504,4 +504,5 @@ void mango_run() {
 
     }
     while (timer_get_ticks() - t0 < 10000);
+    }
 }
