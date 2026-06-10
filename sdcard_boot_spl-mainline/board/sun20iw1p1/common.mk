@@ -1,0 +1,19 @@
+
+#
+#config file for sun20iw1
+#
+ARCH=riscv
+CPU=riscv64
+PLATFORM = sun20iw1p1
+CONFIG_ARCH_RV64I=y
+CFG_SUNXI_GPIO_V2=y
+# JDZ 7/2024 changed from y to n, we do not want to enable dcache on boot
+CFG_USE_DCACHE=n
+CFG_USE_MAEE=y
+
+CFG_BOOT0_RUN_ADDR=0x20000
+CFG_SYS_INIT_RAM_SIZE=0x10000
+CFG_FES1_RUN_ADDR=0x28000
+CFG_SBOOT_RUN_ADDR=0x20480
+CFG_SUNXI_MEMOP=y
+CFG_ARCH_RISCV=y
