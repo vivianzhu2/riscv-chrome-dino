@@ -14,7 +14,6 @@
 #include "strings.h"
 #include <stddef.h>
 #include <stdbool.h>
-// #include "jump.h"
 #include "uart.h"
 #include "i2c.h"
 #include "printf.h"
@@ -187,7 +186,6 @@ static void draw_score() {
     const char* scorestr = decimal_string(score);
     char scoreScreen[64] = "SCORE: "; 
     int length = strlcat(scoreScreen, scorestr, sizeof(scoreScreen));
-    //printf("scoreScreen: %s \n", scoreScreen);
     gl_draw_string(gl_get_width() - (length * gl_get_char_width() + 15), 20, scoreScreen, GL_WHITE);
 
 }
@@ -196,7 +194,6 @@ static void draw_highScore(){
     const char* hscorestr = decimal_string(highScore);
     char hscoreScreen[64] = "HIGH SCORE: "; 
     int hlength = strlcat(hscoreScreen, hscorestr, sizeof(hscoreScreen));
-    //printf("scoreScreen: %s \n", hscoreScreen);
     gl_draw_string(gl_get_width() - (hlength * gl_get_char_width() + 15), 20 + gl_get_char_height() + 10, hscoreScreen, GL_WHITE);
 }
 
