@@ -64,14 +64,14 @@ static uint32_t level = 0;
 
 static void init_colors(void) {
     COLOR_GROUND = gl_color(0x3a, 0x3a, 0x3a);
-    COLOR_BACKGROUND = gl_color(0xfb, 0x74, 0xa8);
-    player_palette[0] = 0;
+    COLOR_BACKGROUND = gl_color(0x1a, 0x1a, 0x1a) ;
+    player_palette[0] = COLOR_BACKGROUND;
     player_palette[1] = gl_color(0xff, 0xcc, 0xbc);    // skin
     player_palette[2] = gl_color(0xf4, 0x43, 0x36);    // shirt
     player_palette[3] = gl_color(0x37, 0x47, 0x4f);    // pants
-    cactus_palette[0] = 0;
+    cactus_palette[0] = COLOR_BACKGROUND;
     cactus_palette[1] = gl_color(0x4c, 0xaf, 0x50);    // green
-    mango_palette[0] = 0;
+    mango_palette[0] = COLOR_BACKGROUND;
     mango_palette[1] = gl_color(0xff, 0x98, 0x00);    // body
     mango_palette[2] = gl_color(0x2e, 0x7d, 0x32);    // leaf
 }
@@ -214,12 +214,11 @@ static void draw_cactus() {
 static void draw_mango() {    // mangos are all on the floor
     // int py = GROUND_Y - MANGO_Y;
     int py =  GROUND_Y - MANGO_Y - PLAYER_ROWS - 20;// make the mangoes float above the ground so the player can squat underneath it
-    int px;
     for (int i = 0; i < MAX_MANGOS; i++) {
-	if (!mangos[i].active) {
+	if (!mangos[i].on_screen) {
 	    continue;
         }
-	px = mangos[i].x;
+	int px = mangos[i].x;
 	draw_sprite(px, py, &mango_map[0][0], MANGO_ROWS, MANGO_COLS, mango_palette);
     }
 } 
@@ -248,7 +247,8 @@ static void update_world() {
     }
 
     for (int i = 0; i < MAX_MANGOS; i++) {
-	if (!mangos[i].on_screen || !mangos[i].active) {
+//	if (!mangos[i].on_screen || !mangos[i].active) {
+	if (!mangos[i].on_screen) {
 	    continue;
 	}
 	mangos[i].x -= world_speed;
@@ -271,10 +271,11 @@ static void update_world() {
 
     if (frame_counter % MANGO_RATE == 0) {
         for (int i = 0; i < MAX_MANGOS; i++) {
-            if (!mangos[i].active) {
+//            if (!mangos[i].active) {
+  	    if (!mangos[i].on_screen) {
                 mangos[i].x = SCREEN_W;
                 mangos[i].y = GROUND_Y - MANGO_Y;
-                mangos[i].active = true;
+    //            mangos[i].active = true;
                 mangos[i].on_screen = true;
                 break;
             }
@@ -396,9 +397,9 @@ static void squat(){
     while(timer_get_ticks() - start_time < duration){
         draw_squat_player(); // Continuously draw the squatting player
         update_world(); // Update the world to keep obstacles moving
-        // if(render(1)){
-        //     break;
-        // }
+//        if(render(1)){
+  //          break;
+     //   }
         // printf("SQUAT DETECTED IN UPDATE_PLAYER\n");
     }
         // player.height = PLAYER_COLS; // Reset height after squatting
