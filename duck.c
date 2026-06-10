@@ -121,7 +121,7 @@ int duckDetected(i2c_device_t* i2cdev){
         // currtotal, 
         // currtime - jtakeoff_time,
         // currtime - stakeoff_time);
-        if(currtotal > jump_threshold && currtime-jtakeoff_time > 3*24000000){
+        if(currtotal > jump_threshold && currtime-jtakeoff_time > 1.5*24000000){
           jtakeoff_time = timer_get_ticks();  
           stakeoff_time = timer_get_ticks();  
           // printf("PEAK: %u | jump_thresh: %u (%s) | squat_thresh: %u (%s)\n",
@@ -132,7 +132,7 @@ int duckDetected(i2c_device_t* i2cdev){
           printf("JUMP DETECTED\n");
           return 1;
         }
-        else if(currtotal > squat_threshold && currtime-stakeoff_time > 3*24000000){
+        else if(currtotal > squat_threshold && currtime-stakeoff_time > 1.5*24000000){
           stakeoff_time = timer_get_ticks();  
           // squat_detected = 1;
           printf("SQUAT DETECTED\n");
@@ -164,7 +164,7 @@ int duckDetected(i2c_device_t* i2cdev){
    
     //printf("X: %06d, Y: %06d, Z: %06d\n", x_accel, y_accel, z_accel);
     
-    // timer_delay_ms(100);
+    // timer_delay_ms(50);
   
 
   return 0;
