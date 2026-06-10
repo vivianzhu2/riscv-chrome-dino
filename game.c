@@ -59,6 +59,7 @@ static color_t mango_palette[3];
 static uint32_t score = 0; 
 static uint32_t highScore = 0; 
 
+static uint32_t level = 0;
 
 
 static void init_colors(void) {
@@ -281,7 +282,20 @@ static void update_world() {
     }
 
 }
+static int changeLevel(){
+    int pduration = 100; 
+    int begscore = score;
+    world_speed += 1;
+    MANGO_RATE  += 33;
+    CACTI_RATE += 50;
 
+    while(score-begscore < pduration){
+        if(level %2 == 1){
+            gl_clear(gl_color(194, 75, 153));
+        }
+    }  
+
+}
 
 static bool check_collision() {
     // uart_putstring("in check_collision\n");
@@ -347,6 +361,7 @@ static bool render(int squat) {
 
 
 
+
 static void render_end() {
     gl_clear(COLOR_GROUND);
     const char* endstr = "GAME OVER";
@@ -354,16 +369,12 @@ static void render_end() {
     gl_draw_string((gl_get_width() - (strlen(endstr) * gl_get_char_width())) / 2, gl_get_height() / 2, endstr, GL_WHITE);
     
     gl_swap_buffer();
-    while (1) {
-        int detected = duckDetected(acc);  // always read every frame
-        if (detected != 0 && jump_detected == 0) {
-            game_reset();      // only latch if nothing pending
-        }
 }    
 
 static void squat(){
     int duration = 1.5 * 24000000; 
     int start_time = timer_get_ticks();
+
     if(player.grounded){
         // player.height = PLAYER_COLS - 5; // Adjust height to simulate squatting
         while(timer_get_ticks() - start_time < duration){
