@@ -59,6 +59,8 @@ static color_t mango_palette[3];
 static uint32_t score = 0; 
 static uint32_t highScore = 0; 
 
+
+
 static void init_colors(void) {
     COLOR_GROUND = gl_color(0x3a, 0x3a, 0x3a);
     COLOR_BACKGROUND = gl_color(0x1a, 0x1a, 0x1a);
