@@ -354,6 +354,11 @@ static void render_end() {
     gl_draw_string((gl_get_width() - (strlen(endstr) * gl_get_char_width())) / 2, gl_get_height() / 2, endstr, GL_WHITE);
     
     gl_swap_buffer();
+    while (1) {
+        int detected = duckDetected(acc);  // always read every frame
+        if (detected != 0 && jump_detected == 0) {
+            game_reset();      // only latch if nothing pending
+        }
 }    
 
 static void squat(){
