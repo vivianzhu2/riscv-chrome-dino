@@ -305,6 +305,11 @@ static bool render(int squat) {
 static void render_end() {
     gl_clear(COLOR_GROUND);
     gl_swap_buffer();
+    while (1) {
+        int detected = duckDetected(acc);  // always read every frame
+        if (detected != 0 && jump_detected == 0) {
+            game_reset();      // only latch if nothing pending
+        }
 }    
 
 static void squat(){
