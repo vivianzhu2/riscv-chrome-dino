@@ -20,6 +20,7 @@
 #include "printf.h"
 #include "duck.h"
 
+
 #define SCREEN_W 640
 #define SCREEN_H 480
 #define GROUND_Y 360
@@ -42,7 +43,7 @@
 #define MAX_MANGOS 3
 
 #define GRAVITY 2
-#define JUMP_VY -20
+#define JUMP_VY -25
 #define CACTI_RATE 100
 #define MANGO_RATE 150
 
@@ -54,6 +55,9 @@ static color_t COLOR_BACKGROUND;
 static color_t player_palette[4];
 static color_t cactus_palette[2];
 static color_t mango_palette[3];
+
+static uint32_t score = 0; 
+static uint32_t highScore = 0; 
 
 static void init_colors(void) {
     COLOR_GROUND = gl_color(0x3a, 0x3a, 0x3a);
@@ -164,6 +168,34 @@ static void draw_squat_player(){
     draw_sprite(px, py, &player_squat_map[0][0], player.height, PLAYER_COLS, player_palette);
 }
 
+void num_to_string(unsigned long num, int base, char *outstr);
+const char *decimal_string(long val);
+static void draw_score() {
+    // static char scorestr[5];
+    // num_to_string(score, 10, scorestr);
+    // const char* scorestr = decimal_string(score);
+    // // printf("scoreDraw: %s \n", scorestr);
+    // const char* scoreScreen = "SCORE: ";
+    // // char* scoreptr = scoreScreen;
+    // int length = strlcat(scoreScreen, scorestr, 10000);
+    // printf("scoreScreen: %s \n", scoreScreen);
+    // gl_draw_string(gl_get_width() - (length*gl_get_char_width() + 15), 20, scoreScreen, GL_WHITE);
+
+    const char* scorestr = decimal_string(score);
+    char scoreScreen[64] = "SCORE: "; 
+    int length = strlcat(scoreScreen, scorestr, sizeof(scoreScreen));
+    printf("scoreScreen: %s \n", scoreScreen);
+    gl_draw_string(gl_get_width() - (length * gl_get_char_width() + 15), 20, scoreScreen, GL_WHITE);
+
+}
+
+static void draw_highScore(){
+    const char* hscorestr = decimal_string(highScore);
+    char hscoreScreen[64] = "HIGH SCORE: "; 
+    int hlength = strlcat(hscoreScreen, hscorestr, sizeof(hscoreScreen));
+    printf("scoreScreen: %s \n", hscoreScreen);
+    gl_draw_string(gl_get_width() - (hlength * gl_get_char_width() + 15), 20 + gl_get_char_height() + 10, hscoreScreen, GL_WHITE);
+}
 
 static void draw_cactus() {
     int py = GROUND_Y - CACTUS_Y;
@@ -177,7 +209,8 @@ static void draw_cactus() {
 }
 
 static void draw_mango() {    // mangos are all on the floor
-    int py = GROUND_Y - MANGO_Y;
+    // int py = GROUND_Y - MANGO_Y;
+    int py =  GROUND_Y - MANGO_Y - PLAYER_ROWS - 20;// make the mangoes float above the ground so the player can squat underneath it
     int px;
     for (int i = 0; i < MAX_MANGOS; i++) {
 	if (!mangos[i].active) {
@@ -231,6 +264,8 @@ static void update_world() {
         }
     }
 
+
+
     if (frame_counter % MANGO_RATE == 0) {
         for (int i = 0; i < MAX_MANGOS; i++) {
             if (!mangos[i].active) {
@@ -258,10 +293,14 @@ static bool check_collision() {
 	    int py = player.py + y * SCALE;
 
 	    color_t next_pixel = gl_read_pixel(px + world_speed, py);
-            color_t green = gl_color(0x4c, 0xaf, 0x50);    // green
+        color_t green = gl_color(0x4c, 0xaf, 0x50);    // green
+        color_t yellow = gl_color(0xff, 0x98, 0x00);    // body
 	    if (next_pixel == green) {
 		return true;
 	    }
+        if(next_pixel == yellow){
+        return true;
+        }
 	}
     }
     return false;
@@ -273,7 +312,8 @@ static void game_reset(void) {
     player.vy = 0;
     player.grounded = true;
     player.height = PLAYER_COLS;
- 
+    draw_score();
+
     for (int i = 0; i < MAX_CACTI;  i++) {
 	cacti[i].on_screen  = false;
     }
@@ -288,6 +328,9 @@ static bool render(int squat) {
     draw_ground();
     draw_cactus();
     draw_mango();
+    // printf("score: %d \n", score);
+    draw_score();
+    draw_highScore();
     // player.height= PLAYER_COLS;
     if(squat == 1){
         draw_squat_player();
@@ -304,6 +347,10 @@ static bool render(int squat) {
 
 static void render_end() {
     gl_clear(COLOR_GROUND);
+    const char* endstr = "GAME OVER";
+    
+    gl_draw_string((gl_get_width() - (strlen(endstr) * gl_get_char_width())) / 2, gl_get_height() / 2, endstr, GL_WHITE);
+    
     gl_swap_buffer();
     while (1) {
         int detected = duckDetected(acc);  // always read every frame
@@ -313,12 +360,13 @@ static void render_end() {
 }    
 
 static void squat(){
-    int duration = 2 * 24000000; 
+    int duration = 1.5 * 24000000; 
     int start_time = timer_get_ticks();
     if(player.grounded){
         // player.height = PLAYER_COLS - 5; // Adjust height to simulate squatting
         while(timer_get_ticks() - start_time < duration){
             draw_squat_player(); // Continuously draw the squatting player
+            update_world(); // Update the world to keep obstacles moving
             if(render(1)){
                 break;
             }
@@ -367,6 +415,7 @@ static int update_player(int* jump_detected) { // pass the jump+detected?
         return *jump_detected;
         
     }
+    
 void mango_run() {
 /*    init_colors();
     // uart_init();
@@ -403,14 +452,20 @@ void mango_run() {
 //        printf("jump detected: %d   \n", jump_detected);
     // update_player(2);
 	update_player(&jump_detected);
+    score = frame_counter * world_speed * 0.025;
+
 //	update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
 	update_world();
 // 	uart_putstring("dont with update world");	
 	bool hit = render(0);
-	
+    // printf("score: %d \n", score);
 //	uart_putstring("done with render");
 	if (hit) {
+        if (score > highScore) {
+            highScore = score;
+        }
 	    render_end();
+        
 	    break;
 	} 
 /*	if (check_collision()) {
