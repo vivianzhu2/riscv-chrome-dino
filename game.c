@@ -65,13 +65,13 @@ static uint32_t level = 0;
 static void init_colors(void) {
     COLOR_GROUND = gl_color(0x3a, 0x3a, 0x3a);
     COLOR_BACKGROUND = gl_color(0xfb, 0x74, 0xa8);
-    player_palette[0] = 0;
+    player_palette[0] = COLOR_BACKGROUND;
     player_palette[1] = gl_color(0xff, 0xcc, 0xbc);    // skin
     player_palette[2] = gl_color(0xf4, 0x43, 0x36);    // shirt
     player_palette[3] = gl_color(0x37, 0x47, 0x4f);    // pants
-    cactus_palette[0] = 0;
+    cactus_palette[0] = COLOR_BACKGROUND;
     cactus_palette[1] = gl_color(0x4c, 0xaf, 0x50);    // green
-    mango_palette[0] = 0;
+    mango_palette[0] = COLOR_BACKGROUND;
     mango_palette[1] = gl_color(0xff, 0x98, 0x00);    // body
     mango_palette[2] = gl_color(0x2e, 0x7d, 0x32);    // leaf
 }
