@@ -3,36 +3,46 @@
 
 #include "i2c.h"
 /*
- * Functions for a re-usable module for 7-segment display
- *
- * assignment 2 extension
- *
+ * Functions for the jumping or ducking module!! 
+ * * duck.c initializes the accelerometer and then reads in the data
+ * It then checks if the data is a peak and within a specific threshold to return
+ * whether the action is a jump or a squat or neither. 
+ * 
  * Author: Vivian Zhu
  */
 
-//  design and implement re-usable module for 7-segment display
-// encapsulates inner workings of refresh, how digits mapt to segments, etc
-// make into tidy package that offers clean interface for client to config display and refresh 4-digit value
-// clock client app becomes simple loop that asks 7-segment to refresh current value
 
-
-
-
-
+/*
+ * `accelDuck_init: initializes the accelerometer MPU
+ *
+ * confirms the accelerometer is running and instantiates new device with its frequency and written registers.
+ *
+ * 
+ * code inspired by / courtesy of  https://github.com/hasanunlu/i2c_demo_for_HiFive1/blob/master/i2c_demo/i2c_demo.c and the i2c driver
+ * @return     i2c_device_t with the accelerometer properties
+ */
 i2c_device_t* accelDuck_init(void); // initialize the display module
 
+
+/*
+ * `duckDetected: checks if the data returns a jump or a squat or neither
+ *
+ * reads in three points: previous, current , next.
+ * first updates values of prev, curr, and next by shifting curr to prev, next to curr.
+ * 
+ * reads the x,y,z acceleration and send to next
+ * calculates the magnitude of next
+ * 
+ * checks if curr is a peak
+ * checks if magnitude of curr is within threshold of either jump or squat
+ * checks if the time between each jump is enough so it doesnt double count
+ *     this is because a jump registers as two high peaks (one for pushing off the floor and one for landing)
+ *
+ * 
+ * @return    integer that if 0: nothing detected, 1: jump detected, 2: squat detected
+ */
 int duckDetected(i2c_device_t* i2cdev); //   configure the display by setting the appropriate refresh delay and display duration for the display, and ensuring that all necessary pins are set to output mode
 
-void duckReset(void);
-// void set_refresh_delay(unsigned int rdelay); // set the refresh delay for the display
-
-// unsigned int get_refresh_delay(void); // get the refresh delay for the display
-
-// void set_display_duration(unsigned int dur); // set the display duration for the display
-
-// unsigned int get_display_duration(void); // get the display duration for the display
-
-// void display(unsigned int num); //refresh 4-digit value on the display by setting the appropriate segments to high or low based on the digit values
 
 #endif
  

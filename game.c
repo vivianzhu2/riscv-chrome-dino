@@ -14,6 +14,7 @@
 #include "strings.h"
 #include <stddef.h>
 #include <stdbool.h>
+// #include "jump.h"
 #include "uart.h"
 #include "i2c.h"
 #include "printf.h"
@@ -58,8 +59,8 @@ static color_t mango_palette[3];
 static uint32_t score = 0; 
 static uint32_t highScore = 0; 
 
-static uint32_t level = 0;
 
+static int  squatting = 0;
 
 static void init_colors(void) {
     COLOR_GROUND = gl_color(0x3a, 0x3a, 0x3a);
@@ -186,6 +187,7 @@ static void draw_score() {
     const char* scorestr = decimal_string(score);
     char scoreScreen[64] = "SCORE: "; 
     int length = strlcat(scoreScreen, scorestr, sizeof(scoreScreen));
+    //printf("scoreScreen: %s \n", scoreScreen);
     gl_draw_string(gl_get_width() - (length * gl_get_char_width() + 15), 20, scoreScreen, GL_WHITE);
 
 }
@@ -194,16 +196,19 @@ static void draw_highScore(){
     const char* hscorestr = decimal_string(highScore);
     char hscoreScreen[64] = "HIGH SCORE: "; 
     int hlength = strlcat(hscoreScreen, hscorestr, sizeof(hscoreScreen));
+    //printf("scoreScreen: %s \n", hscoreScreen);
     gl_draw_string(gl_get_width() - (hlength * gl_get_char_width() + 15), 20 + gl_get_char_height() + 10, hscoreScreen, GL_WHITE);
 }
 
 static void draw_cactus() {
+    
     int py = GROUND_Y - CACTUS_Y;
     for (int i = 0; i < MAX_CACTI; i++) {
 	if (!cacti[i].on_screen) {
 	    continue;
 	}
 	int px = cacti[i].x;
+    // printf("CACTUS drawn at y=%d to y=%d\n", py, py + CACTUS_ROWS * SCALE);
 	draw_sprite(px, py, &cactus_map[0][0], CACTUS_ROWS, CACTUS_COLS, cactus_palette);
     }
 }
@@ -280,30 +285,24 @@ static void update_world() {
     }
 
 }
-static int changeLevel(){
-    int pduration = 100; 
-    int begscore = score;
-    world_speed += 1;
-    MANGO_RATE  = 33;
-    CACTI_RATE -= 25;
 
-    while(score-begscore < pduration){
-        if(level %2 == 1){
-           gl_clear(gl_color(194, 75, 153));
-        }
-    }  
-    level+=1;
-    return level;
 
-}
 
-static bool check_collision() {
+static bool check_collision(int squat) {
     // uart_putstring("in check_collision\n");
+
+
     for (int x = 0; x < PLAYER_ROWS; x++) {
 	for (int y = 0; y < PLAYER_COLS; y++) {
-	    if (player_map[x][y] == 0) {
-		continue;
-	    }
+        if (squatting == 1) {
+            if (player_squat_map[x][y] == 0){
+                continue;
+            }
+        } else {
+            if (player_map[x][y] == 0){
+                continue;
+            } 
+        }
 	    
 	    int px = PLAYER_X + x * SCALE;
 	    int py = player.py + y * SCALE;
@@ -311,10 +310,13 @@ static bool check_collision() {
 	    color_t next_pixel = gl_read_pixel(px + world_speed, py);
         color_t green = gl_color(0x4c, 0xaf, 0x50);    // green
         color_t yellow = gl_color(0xff, 0x98, 0x00);    // body
+        // printf("checking px=%d py=%d | read=%x | green=%x | match=%d\n", 
+            // px, py, next_pixel, green, next_pixel == green);
 	    if (next_pixel == green) {
-		return true;
+            // printf("CACTUS HIT at x=%d y=%d\n", px, py);
+            return true;
 	    }
-        if(next_pixel == yellow){
+        if(next_pixel == yellow && !squatting){
         return true;
         }
 	}
@@ -326,6 +328,7 @@ static void game_reset(void) {
     frame_counter = 0;
     player.py = GROUND_Y - (PLAYER_ROWS * SCALE);
     player.vy = 0;
+    squatting = 0;
     player.grounded = true;
     player.height = PLAYER_COLS;
     draw_score();
@@ -340,6 +343,7 @@ static void game_reset(void) {
 }
 
 static bool render(int squat) {
+    bool hit = check_collision(squat);
     gl_clear(COLOR_BACKGROUND);
     draw_ground();
     draw_cactus();
@@ -348,13 +352,13 @@ static bool render(int squat) {
     draw_score();
     draw_highScore();
     // player.height= PLAYER_COLS;
-    if(squat == 1){
+    if(squatting == 1){
         draw_squat_player();
     }
     else{
         draw_player();
     }
-    bool hit = check_collision();
+
     gl_swap_buffer();
     return hit;
 }
@@ -385,28 +389,36 @@ static void render_end() {
     gl_swap_buffer();
 }    
 
-static void squat(){
+static bool squat(){
     int duration = 1.5 * 24000000; 
     int start_time = timer_get_ticks();
-
-    // if(player.grounded){
-        // player.height = PLAYER_COLS - 5; // Adjust height to simulate squatting
+    squatting = 1;
+    bool hit = false;
     while(timer_get_ticks() - start_time < duration){
-        draw_squat_player(); // Continuously draw the squatting player
-        update_world(); // Update the world to keep obstacles moving
-       if(render(1)){
-           break;
-       }
-        // printf("SQUAT DETECTED IN UPDATE_PLAYER\n");
+        frame_counter++;
+        update_world();
+        if(render(1)){
+            hit = true;
+            return true;
+        }   // record hit but keep going
     }
-        // player.height = PLAYER_COLS; // Reset height after squatting
-        // }
-    // if (timer_get_ticks() < squat_end_time) {
-    //     player.height = PLAYER_ROWS - 5;  // crouched
-    // } else {
-    //     player.height = PLAYER_ROWS;      // normal
-    // }
+    squatting = 0;
+    return hit;  // report hit after squat fully completes
 }
+// static void squat(){
+//     int duration = 1.5 * 24000000; 
+//     int start_time = timer_get_ticks();
+//     squatting = 1;
+//     while(timer_get_ticks() - start_time < duration){
+//         frame_counter++;
+//         update_world();
+//         if(render(1)){
+//             squatting = 0;
+//             return;   // 
+//         }
+//     }
+//     squatting = 0;
+// }
 static int update_player(int* jump_detected) { // pass the jump+detected? 
     // static void update_player() {
         if (*jump_detected == 1 && player.grounded) {
@@ -415,11 +427,14 @@ static int update_player(int* jump_detected) { // pass the jump+detected?
             *jump_detected = 0;
         }
         if(*jump_detected == 2 && player.grounded){
-            squat();
-            // player.grounded = false;
+            bool squat_hit = squat();
             *jump_detected = 0;
+            if(squat_hit){
+                return -1;
+            }   
         }
         player.vy += GRAVITY;
+        
         player.py += player.vy;
     //  if (*jump_detected == 2 && player.grounded) {
     //         squat_end_time = timer_get_ticks() + SQUAT_DURATION;
@@ -464,6 +479,7 @@ void mango_run() {
     static int jump_detected = 0;
     static int jump_done = 1;
     while (1) {
+        printf("LOOP TOP\n");
         unsigned long t0 = timer_get_ticks();
         
         // if(jump_detected == 0){
@@ -475,29 +491,39 @@ void mango_run() {
         }
         // jump_detected = 0; // reset for next jump
         frame_counter++;
-        printf("jump detected: %d   \n", jump_detected);
+        // printf("jump detected: %d   \n", jump_detected);
 
-	update_player(&jump_detected);
+	int player_result = update_player(&jump_detected);
     score = frame_counter * world_speed * 0.025;
 
 //	update_player(&jump_detected); // start jump when jump detected is 1, and when jump complete on teh ground, clear the jump detector to zero
 	update_world();
 // 	uart_putstring("dont with update world");	
-	bool hit = render(0);
+    bool hit;
+    if (player_result == -1) {
+        hit = true;
+    } else {
+        hit = render(0);
+    }
     // printf("score: %d \n", score);
+    
 //	uart_putstring("done with render");
 	if (hit) {
+
+        printf("HIT TRIGGERED\n");
         int start = timer_get_ticks();
         int duration = 5 * 24000000;
         if (score > highScore) {
             highScore = score;
         }
-
+        // game_reset();
         render_end();
         unsigned int beg = timer_get_ticks();
         while (timer_get_ticks() - beg < 5 * 24000000);
         game_reset();
         jump_detected = 0;
+        render(0);  
+        render(0); 
 
     }
     while (timer_get_ticks() - t0 < 10000);
