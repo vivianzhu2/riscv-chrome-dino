@@ -1,3 +1,13 @@
+/* File: duck.c
+ * -----------------
+ *  implement duck detection system
+ * 
+ * duck.c initializes the accelerometer and then reads in the data
+ * It then checks if the data is a peak and within a specific threshold to return
+ * whether the action is a jump or a squat or neither. 
+ * 
+ */
+
 #include "i2c.h"
 #include "printf.h"
 #include "strings.h"
@@ -5,7 +15,7 @@
 #include "gpio.h"
 #include "timer.h"
 
-
+// ACCEL INITS AND ADDRESSES
 #define MPU6050_ADDR 0x68
 
 #define MPU6050_RA_ACCEL_XOUT_H     0x3B
@@ -31,13 +41,23 @@
 #define LONG 25 // Equals ~400KHz
 #define SHORT 5
 
+// keep track of the magnitudes of the three points to check for a peak
 static unsigned int nexttotal = 0;
 static unsigned int currtotal = 0;
 static unsigned int prevtotal = 0;
 
-
-static unsigned int jtakeoff_time= 0; // fix this
+// jump and squat initial time markings
+static unsigned int jtakeoff_time= 0; 
 static unsigned int stakeoff_time = 0;
+/*
+ * `accelDuck_init: initializes the accelerometer MPU
+ *
+ * confirms the accelerometer is running and instantiates new device with its frequency and written registers.
+ *
+ * 
+ * code inspired by / courtesy of  https://github.com/hasanunlu/i2c_demo_for_HiFive1/blob/master/i2c_demo/i2c_demo.c and the i2c driver
+ * @return     i2c_device_t with the accelerometer properties
+ */
 i2c_device_t* accelDuck_init(){
 
   uint8_t data;
@@ -64,106 +84,65 @@ i2c_device_t* accelDuck_init(){
 }
 
 
-
+/*
+ * `duckDetected: checks if the data returns a jump or a squat or neither
+ *
+ * reads in three points: previous, current , next.
+ * first updates values of prev, curr, and next by shifting curr to prev, next to curr.
+ * 
+ * reads the x,y,z acceleration and send to next
+ * calculates the magnitude of next
+ * 
+ * checks if curr is a peak
+ * checks if magnitude of curr is within threshold of either jump or squat
+ * checks if the time between each jump is enough so it doesnt double count
+ *     this is because a jump registers as two high peaks (one for pushing off the floor and one for landing)
+ *
+ * 
+ * @return    integer that if 0: nothing detected, 1: jump detected, 2: squat detected
+ */
 int duckDetected(i2c_device_t* i2cdev){
     int jump_threshold = 830723680; // Adjust this threshold based on experimentation to detect jumps accurately
     static int jump_detected = 0;
-    // static int takeoff_detected = 0;
 
-
-    // static int start = 0;
-    // if (start == 0) {
-    //     takeoff_time = timer_get_ticks();
-    //     start = 1;
-    // }
     static int landing_time = 0;
     static int squat_detected = 0;
     static int squat_threshold = 404970496; // Adjust this threshold based on experimentation to detect squats accurately
     static uint8_t accel[6];
-    
 
-    // static accel_t prev_acc = NULL;
-    // static accel_t curr_acc = NULL;
-    // static accel_t next_acc = NULL;
-
-    
-    prevtotal = currtotal;
+   
+    prevtotal = currtotal; //update values to shift and next turns into empty
     currtotal = nexttotal; 
 
  
 
-    i2c_read_reg_n(i2cdev, 0x3B, accel, 6);
+    i2c_read_reg_n(i2cdev, 0x3B, accel, 6); // read accel data
     int16_t nextx=  (accel[0]<<8)+accel[1];
     int16_t nexty = (accel[2]<<8)+accel[3];
     int16_t nextz=  (accel[4]<<8)+accel[5];
-    unsigned int currtime = timer_get_ticks(); 
-
-    nexttotal = (nextx * nextx + nexty * nexty + nextz * nextz);
+    unsigned int currtime = timer_get_ticks(); // current time to add
+    nexttotal = (nextx * nextx + nexty * nexty + nextz * nextz); // calculate magnitude
 //    printf("prevtotal: %d \ncurrtotal: %d\n nexttotal: %d\n", prevtotal, currtotal, nexttotal);
-    if(nexttotal < currtotal && currtotal > prevtotal && nexttotal!=0 && currtotal!=0 && prevtotal !=0){
- /*    printf("PEAK: %d | jump_diff: %d | squat_diff: %d\n", 
-        currtotal, 
-        currtime - jtakeoff_time,
-        currtime - stakeoff_time);
-   */     if(currtotal > jump_threshold && currtime-jtakeoff_time > 1.5*24000000){
-          jtakeoff_time = timer_get_ticks();  
+    if(nexttotal < currtotal && currtotal > prevtotal && nexttotal!=0 && currtotal!=0 && prevtotal !=0){ // is it a peak??
+ 
+     if(currtotal > jump_threshold && currtime-jtakeoff_time > 1.5*24000000){ // is it a jump?? and is it the FIRST spike of the jump?
+          jtakeoff_time = timer_get_ticks();  // start time of when it starts jumping
           stakeoff_time = timer_get_ticks();  
-          // printf("PEAK: %u | jump_thresh: %u (%s) | squat_thresh: %u (%s)\n",
-          //   currtotal,
-          //   jump_threshold,  currtotal > jump_threshold  ? "PASS" : "FAIL",
-          //   squat_threshold, currtotal > squat_threshold ? "PASS" : "FAIL");
-          // jump_detected = 1;
-          printf("JUMP DETECTED\n");
-          return 1;
+
+          printf("JUMP DETECTED\n"); 
+          return 1; //return if it passes condition!! 
         }
-        else if(currtotal > squat_threshold && currtime-stakeoff_time > 1.5*24000000){
-          stakeoff_time = timer_get_ticks();  
-          // squat_detected = 1;
+        else if(currtotal > squat_threshold && currtime-stakeoff_time > 1.5*24000000){ // is it a squat?? 
+          stakeoff_time = timer_get_ticks();  // start time of squat
           printf("SQUAT DETECTED\n");
-          return 2;
+          return 2; // return if squat!!
         }
         else{
-          return 0;
+          return 0; // return if neither :( 
         }
     }
 
-    
-
-
-
-
-    // if(totalaccel > threshold && currtime-takeoff_time > 2*24000000){ // Check if enough time has passed since last takeoff to prevent multiple detections for the same jump
-    //     // takeoff_detected = 1;
-    //     takeoff_time = timer_get_ticks();
-    //    printf("JUMP DETECTED\n");
-    //     re turn 1;
-    // }
-    // if(takeoff_detected == 1 && totalaccel > 20000){
-    //     landing_time = timer_get_ticks();
-    //     int airtime = landing_time - takeoff_time;
-    //     if(airtime > 500){ // Adjust this threshold based on experimentation to filter out false positives
-    //         jump_detected = 1;  
-    //     }
-    //     takeoff_detected = 0; // reset for next jump
-    // }
-
-   
-    //printf("X: %06d, Y: %06d, Z: %06d\n", x_accel, y_accel, z_accel);
-    
-    // timer_delay_ms(50);
-  
 
   return 0;
 
 }
-void duckReset(void){
-  stakeoff_time = 0;
-  jtakeoff_time = 0;
-  prevtotal = 0;
-  currtotal = 0;
-  nexttotal = 0;
-}
-
-// toggle when to look at jump
-
-//returns 1 when it is a jump, 0 when it is not
