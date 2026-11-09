@@ -1,7 +1,7 @@
 ## Project title
 MANGO-RUN
 ## Team members
-Nancy Zou Vivian Zhu
+Vivian Zhu Nancy Zou 
 
 ## Project description
 We used an accelerometer to identify the user's physical jumps and crouches and reflected that on the monitor which showed a delightful CS107E version of the dinosaur game. The accelerometer was in a designed CAD case that was a belt around the waist. The dinosaur game included mango coins that could be collected and randomized obstacles for the user to jump on.
